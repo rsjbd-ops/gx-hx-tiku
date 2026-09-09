@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b6bcb">
+<title>广西航线刷题</title>
+<style>
+  :root{
+    --bg:#f1f3f7; --card:#fff; --fg:#14181f; --muted:#6b7280; --line:#e2e6ec;
+    --pri:#0b6bcb; --pri-soft:#e7f1fc;
+    --ok:#0f7a46; --ok-bg:#e6f6ec; --ok-line:#93d5af;
+    --bad:#c0271f; --bad-bg:#fdeceb; --bad-line:#f0aaa4;
+    --r:14px; --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1116; --card:#181d24; --fg:#e8ecf2; --muted:#98a1ae; --line:#262c35;
+      --pri:#5aa2f0; --pri-soft:#16283c;
+      --ok:#54c98d; --ok-bg:#102c1d; --ok-line:#2c6b49;
+      --bad:#ff7268; --bad-bg:#391a17; --bad-line:#7c3a33;
+      --shadow:none;
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--fg);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    -webkit-text-size-adjust:100%;
+    touch-action:manipulation;
+    overscroll-behavior-y:contain;
+  }
+  button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+  #app{max-width:840px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+
+  /* ---------- header ---------- */
+  .hd{
+    position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
+    padding:calc(8px + env(safe-area-inset-top)) 14px 9px;box-shadow:var(--shadow);
+  }
+  .hd-row{display:flex;align-items:center;gap:10px}
+  .hd-row + .hd-row{margin-top:8px}
+  .hd-title{font-weight:650;font-size:17px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hd-sub{font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .hd-sub strong{color:var(--pri);font-weight:650}
+
+  /* ---------- main ---------- */
+  .main{flex:1;padding:14px 14px 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+  .card-hd{padding:14px 14px 10px}
+  .card-title{font-weight:650;font-size:16px}
+  .card-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+  /* ---------- chapter list ---------- */
+  .ch{
+    display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;
+    width:100%;text-align:left;padding:12px 14px;border-top:1px solid var(--line);
+  }
+  .ch:active{background:var(--pri-soft)}
+  .ch-name{font-size:15.5px;font-weight:500}
+  .ch-meta{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .bar{grid-column:1/-1;height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:7px}
+  .bar>i{display:block;height:100%;background:var(--pri);border-radius:99px;transition:width .25s}
+
+  /* ---------- segmented ---------- */
+  .segwrap{display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:3px}
+  .seg{min-height:34px;padding:0 14px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted)}
+  .seg.on{background:var(--card);color:var(--pri);font-weight:650;box-shadow:var(--shadow)}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    min-height:46px;padding:0 18px;border-radius:12px;
+    background:var(--card);border:1px solid var(--line);
+    font-size:15.5px;font-weight:550;
+  }
+  .btn:active{transform:scale(.985)}
+  .btn.pri{background:var(--pri);color:#fff;border-color:transparent}
+  .btn.ghost{background:transparent;color:var(--muted);border-color:var(--line)}
+  .btn.sm{min-height:44px;padding:0 14px;font-size:14.5px;border-radius:10px}
+  .btn[disabled]{opacity:.4;pointer-events:none}
+
+  /* ---------- question ---------- */
+  .qcard{padding:16px 14px 14px}
+  .qno{font-size:12.5px;color:var(--muted);margin-bottom:8px;font-variant-numeric:tabular-nums}
+  .stem{font-size:17.5px;line-height:1.72;font-weight:550;letter-spacing:.2px}
+  .stem .bk{color:var(--pri);font-weight:700}
+  .opts{margin-top:16px}
+  .opt{
+    display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;
+    padding:13px 14px;margin-bottom:10px;border-radius:12px;
+    border:1.5px solid var(--line);background:var(--card);
+    font-size:16px;line-height:1.55;transition:background .15s,border-color .15s;
+  }
+  .opt:last-child{margin-bottom:0}
+  .opt:active{transform:scale(.995)}
+  .opt .tag{
+    flex:0 0 auto;width:27px;height:27px;border-radius:8px;background:var(--pri-soft);color:var(--pri);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-top:1px;
+  }
+  .opt .ot{flex:1;min-width:0;word-break:break-word}
+  .opt .mk{flex:0 0 auto;font-weight:800;font-size:17px;margin-left:4px}
+  .opt.ok{border-color:var(--ok-line);background:var(--ok-bg)}
+  .opt.ok .tag{background:var(--ok);color:#fff}
+  .opt.ok .mk{color:var(--ok)}
+  .opt.bad{border-color:var(--bad-line);background:var(--bad-bg)}
+  .opt.bad .tag{background:var(--bad);color:#fff}
+  .opt.bad .mk{color:var(--bad)}
+  .opt.judge{justify-content:center;font-size:17px;font-weight:600;padding:16px 14px}
+  .opt.judge .ot{flex:0 0 auto}
+
+  /* ---------- result ---------- */
+  .res{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:15.5px;line-height:1.6}
+  .res.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+  .res.bad{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad-line)}
+  .res b{font-weight:700}
+  .res .note{margin-top:7px;font-size:13px;font-weight:400;color:var(--muted);line-height:1.55}
+  .res.ref{background:var(--pri-soft);color:var(--fg);border:1px solid var(--line);white-space:pre-wrap}
+
+  /* ---------- 题目配图 ---------- */
+  .fig{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1014;position:relative;cursor:zoom-in}
+  .fig img{display:block;width:100%;max-width:600px;margin:0 auto;height:auto;max-height:44vh;object-fit:contain}
+  .fig .zoomhint{position:absolute;right:8px;bottom:8px;font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:3px 9px;border-radius:99px;pointer-events:none}
+  .fig.figerr{display:flex;align-items:center;justify-content:center;min-height:86px;cursor:default}
+  .fig.figerr img,.fig.figerr .zoomhint{display:none}
+  .fig.figerr::after{content:'配图加载失败';color:var(--muted);font-size:13px}
+  .lightbox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:10px;cursor:zoom-out}
+  .lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+  .lightbox .lb-close{position:absolute;top:calc(10px + env(safe-area-inset-top));right:14px;color:#fff;font-size:14.5px;background:rgba(255,255,255,.16);border-radius:99px;padding:9px 15px}
+
+  /* ---------- footer ---------- */
+  .ft{
+    position:sticky;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
+    padding:9px 14px calc(9px + env(safe-area-inset-bottom));display:flex;gap:10px;
+  }
+  .ft .btn{flex:1}
+  .empty{padding:48px 14px;text-align:center;color:var(--muted);font-size:15px}
+  .hint{font-size:12.5px;color:var(--muted);text-align:center;padding:2px 0 12px}
+
+  /* ---------- wide screens (tablet / desktop) ---------- */
+  @media (min-width:700px){
+    .main{padding:18px 18px 24px}
+    .stem{font-size:18px}
+    .opt{padding:15px 16px}
+    .opt.judge{font-size:18px}
+    .ft{padding-left:18px;padding-right:18px}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const BANK = {"generated":"2026-09-09 23:22","routes":[{"id":"nn-gg","name":"南宁 → 贵港（南宁航区）","chapters":[{"id":"nn-gg-c1","name":"鸡儿滩","questions":[{"id":"nn-gg-1","type":"single","stem":"近年来在本滩搁浅事故多发生在（         ）处？","options":["左侧航道白标边","右侧航道红标边","72#示位标","航道中间"],"answer":0,"ref":"","note":"","img":"images/nn-gg-1.webp"},{"id":"nn-gg-2","type":"single","stem":"本滩中洪水期水流（         ）？","options":["直","左岸","右岸","紊乱"],"answer":2,"ref":"","note":"","img":"images/nn-gg-2.webp"},{"id":"nn-gg-3","type":"single","stem":"本滩大洪水时（         ）至（         ）有大横流水。","options":["1#标至2#标","西竹坑至 6#标","4#标至2#标","6#标至72#标"],"answer":3,"ref":"","note":"","img":"images/nn-gg-3.webp"},{"id":"nn-gg-4","type":"single","stem":"中洪水期船舶在本滩下行要以（         ）为目标挂高行驶。","options":["左侧白标","右侧红标","航道中间行驶","以72#示位标"],"answer":0,"ref":"","note":"","img":""},{"id":"nn-gg-5","type":"single","stem":"本滩的正常水位是（         ）米。","options":["46.2","30.5","42.6","57.6"],"answer":2,"ref":"","note":"","img":"images/nn-gg-5.webp"},{"id":"nn-gg-6","type":"single","stem":"本滩下游等候过闸的上行船舶应在（         ）至港务所码头（         ）一侧锚泊。","options":["航道局码头；右岸","鸡儿滩1#白标；左岸","横州大桥；左岸","航道局码头；左岸"],"answer":3,"ref":"","note":"","img":"images/nn-gg-6.webp"},{"id":"nn-gg-7","type":"single","stem":"本滩下游待闸上行的船舶在得到（         ）后，才能驶上引航道靠船墩停靠，VHF 频道为（         ）。","options":["海事局；16","闸室通知；67","海事局；67","闸室通知；16"],"answer":1,"ref":"","note":"","img":"images/nn-gg-7.webp"},{"id":"nn-gg-8","type":"single","stem":"本滩的零度水位是（         ）米。","options":["41","42.6","42.76","62.1"],"answer":0,"ref":"","note":"","img":"images/nn-gg-8.webp"},{"id":"nn-gg-9","type":"single","stem":"本滩大洪水时，（         ）至（         ）水流流向（         ）。","options":["西竹坑；6#；右岸","6#；72#；左岸","6#；72#；右岸","6#；3#；右岸"],"answer":2,"ref":"","note":"","img":"images/nn-gg-9.webp"},{"id":"nn-gg-10","type":"single","stem":"中洪水期船舶在本滩下行操作方法：船舶驶离出引航道后逐步调整航向，并分别以航道的（         ）侧（         ）为目标行驶出滩尾。","options":["右；4#、5#、3#红标","左；4#、2#、1#白标","右；72#示位标","立中；中央航道"],"answer":1,"ref":"","note":"","img":"images/nn-gg-10.webp"},{"id":"nn-gg-11","type":"judge","stem":"判断题：本滩有蛤乸石和鸡屎石，分别在滩头和滩尾，船舶上、下行经过时应注意避让。","options":["对","错"],"answer":0,"ref":"","note":"","img":""},{"id":"nn-gg-12","type":"single","stem":"本滩航段的左侧设置有（         ）座（         ）标，晚间（         ）光，（         ）闪。","options":["3；侧面；红；单","4；示；红；四","3；侧面；绿；单","1；示位；红；四"],"answer":2,"ref":"","note":"","img":"images/nn-gg-12.webp"},{"id":"nn-gg-13","type":"judge","stem":"判断题：正常水位船舶上行本滩时，船舶可沿左岸一侧上行。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/nn-gg-13.webp"},{"id":"nn-gg-14","type":"single","stem":"本滩在正常水位 42.6 米时，航路深度不少于____米。","options":["5","4","5.5","5.8"],"answer":1,"ref":"","note":"","img":"images/nn-gg-14.webp"},{"id":"nn-gg-15","type":"judge","stem":"判断题：本滩大洪水西津泄洪时会造成船舶航行困难的是横流和急流，过往的船舶都应加以注意，防止偏航。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-15.webp"},{"id":"nn-gg-16","type":"judge","stem":"判断题：本滩在能见度不良时，沿白标 4#、2#、1#行驶的船舶容易找不到目标，进而造成船舶偏航。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-16.webp"},{"id":"nn-gg-17","type":"single","stem":"上航该滩进入一线船闸引航要领：船到鸡儿滩（         ）以引航道尾挡水墙（         ）为目标上航，到该标附近，距挡水墻约20米驶入一线船闸。","options":["4#白标；鸡儿滩5#白标","5#白标；鸡儿滩6#红标","4#白标；鸡儿滩5#红标"],"answer":2,"ref":"","note":"","img":"images/nn-gg-17.webp"},{"id":"nn-gg-18","type":"judge","stem":"判断题：本滩主航道靠左岸一侧，河床底质为砂石混合型。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/nn-gg-18.webp"},{"id":"nn-gg-19","type":"single","stem":"本滩左侧航道边界蛤乸石暗礁深度约（         ）米。","options":["0.10","0.20","0.45"],"answer":2,"ref":"","note":"","img":"images/nn-gg-19.webp"},{"id":"nn-gg-20","type":"single","stem":"本滩事故多发地点在（         ）。","options":["5号红标附近","3号红标附近","2号白标附近"],"answer":2,"ref":"","note":"","img":"images/nn-gg-20.webp"},{"id":"nn-gg-21","type":"judge","stem":"判断题：本滩4#白标至津贵72#示位标航段不宜会船。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-21.webp"},{"id":"nn-gg-22","type":"single","stem":"本滩正常水位时流向不太明显，但大洪水期或泄洪时每秒流速可达（         ）秒。","options":["1米","2米","1.70―2.30米"],"answer":2,"ref":"","note":"","img":"images/nn-gg-22.webp"},{"id":"nn-gg-23","type":"single","stem":"本滩横向流速最大约（         ）/秒。","options":["0.11米","0.20米","0.33米"],"answer":1,"ref":"","note":"","img":"images/nn-gg-23.webp"},{"id":"nn-gg-24","type":"single","stem":"本滩枯水期水位高程下降至41.66米航道深度约（         ）米。","options":["1.50米","2.56米","3.00米"],"answer":1,"ref":"","note":"","img":"images/nn-gg-24.webp"}]},{"id":"nn-gg-c2","name":"地伏滩","questions":[{"id":"nn-gg-25","type":"single","stem":"本滩有（         ）段（         ）航段，过往船舶要加以注意。","options":["两；不宜会船","一；不宜会船","零；不宜会船","全滩；都不宜会船"],"answer":0,"ref":"","note":"","img":"images/nn-gg-25.webp"},{"id":"nn-gg-26","type":"judge","stem":"判断题：船舶从本滩上游下行，要进入金鲤鱼水泥码头装卸作业，应从下游码头入口的左右通航标挂高驶入 。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-26.webp"},{"id":"nn-gg-27","type":"single","stem":"本滩转弯处有扫弯水，水流（         ）？","options":["左边","航道中间","右边"],"answer":2,"ref":"","note":"","img":"images/nn-gg-27.webp"},{"id":"nn-gg-28","type":"single","stem":"本滩的大婆石暗礁位于航道（         ）一侧。","options":["左岸","右岸","航道中间","地伏滩尾"],"answer":0,"ref":"","note":"","img":"images/nn-gg-28.webp"},{"id":"nn-gg-29","type":"single","stem":"当贵港枢纽为 42.6 米时，本滩的三拐石水深为（         ）米。","options":["2.00","2.50","3.00","2.40"],"answer":3,"ref":"","note":"","img":"images/nn-gg-29.webp"},{"id":"nn-gg-30","type":"single","stem":"中洪水期船舶下行到达本滩10#红标时，应分别以（         ）为目标挂高行驶。","options":["8#、6","9#、7#","立中"],"answer":1,"ref":"","note":"","img":"images/nn-gg-30.webp"},{"id":"nn-gg-31","type":"single","stem":"本滩靠（         ）侧（         ）标是事故多发水域。","options":["左；9#至7#","中；1#至 2#","左；8#至6#","右；8#至6#"],"answer":3,"ref":"","note":"","img":"images/nn-gg-31.webp"},{"id":"nn-gg-32","type":"single","stem":"本滩（         ）和（         ）水域不宜会船。","options":["10#至6#红标；1#至2#标之间","9#至7#白标；4#至3#标之间","9#至7#白标；1#至2#标之间","7#至6#标；5#至4#标之间"],"answer":0,"ref":"","note":"","img":"images/nn-gg-32.webp"},{"id":"nn-gg-33","type":"single","stem":"金锂水坭厂码头水域设置有许多黄色浮鼓，为（         ）。","options":["示位标","侧面标","左右通航标","专用浮标"],"answer":3,"ref":"","note":"","img":"images/nn-gg-33.webp"},{"id":"nn-gg-34","type":"single","stem":"本滩（         ）标附近的三拐石水深是（         ）米（贵港枢纽 42.6 米时）","options":["8#；2.4","7#；1.7","10#至8#；2.4","6-1#；2.4"],"answer":3,"ref":"","note":"","img":"images/nn-gg-34.webp"},{"id":"nn-gg-35","type":"single","stem":"本滩的河岸上共设置（         ）座助航标志，均为（         ）标，右岸（         ）座、左岸（         ）座。","options":["11；侧面；7；4","3；侧面岸；2；1","3；示位；2；1","3；左右通航；2；1"],"answer":2,"ref":"","note":"","img":"images/nn-gg-35.webp"},{"id":"nn-gg-36","type":"single","stem":"本滩的水面上右侧航道边共设置有（         ）座航行标志，均为（         ）标，晚间（         ）光、（         ）闪","options":["4；侧面；白；单","4；示位；白；四","7；侧面；红；单","7；专用浮；黄；单"],"answer":2,"ref":"","note":"","img":"images/nn-gg-36.webp"},{"id":"nn-gg-37","type":"single","stem":"本滩侧面标标名和编号的标注方法是：标名为（         ）、编号（         ）。","options":["地伏滩；滩下游第一座位为1#然后向下起算","地伏滩；滩下游第一座位为1#然后向上起算","四官滩；滩下游第一座位为1#然后向上起算","四官；没有规律"],"answer":1,"ref":"","note":"","img":"images/nn-gg-37.webp"},{"id":"nn-gg-38","type":"judge","stem":"判断题：船舶在金锂水泥厂码头装卸好货物后准备下行时，应从上游码头出口处的左右通航标挂高驶出，或再上行到滩头后再掉头下行。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-38.webp"},{"id":"nn-gg-39","type":"single","stem":"贵港枢纽 42.6 米时，本滩将军角对开暗礁水深为_____米","options":["2.0","1.0","1.8","3.0"],"answer":2,"ref":"","note":"","img":"images/nn-gg-39.webp"},{"id":"nn-gg-40","type":"judge","stem":"判断题：本滩的将军角对开暗礁位于滩头航道入口的左侧。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-40.webp"},{"id":"nn-gg-41","type":"judge","stem":"判断题：进出金锂水泥厂码头时，船舶应在出入口的两个浮鼓间挂高出入。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-41.webp"},{"id":"nn-gg-42","type":"single","stem":"贵港水利枢纽正常水位_____米。","options":["30.5-29.6","42.6-42.76","20.2-18.6","65.5-66"],"answer":1,"ref":"","note":"","img":"images/nn-gg-42.webp"}]},{"id":"nn-gg-c3","name":"伏波大滩","questions":[{"id":"nn-gg-43","type":"single","stem":"本滩左岸庙口对开下方的同鼓石暗礁水深为（         ）米（贵港枢纽 42.6 米时）。","options":["1.0","2.6","3.0","4.0"],"answer":1,"ref":"","note":"","img":"images/nn-gg-43.webp"},{"id":"nn-gg-44","type":"single","stem":"本滩 8#标航段是丛礁区，且水流主要流向该位置，船舶航经该处应以（         ）标挂高船位行驶，防止船舶被水流冲压向（         ）侧暗礁。","options":["8#、6#；左","8#、6#；右","9#、7#；右","船位居中；右"],"answer":2,"ref":"","note":"","img":"images/nn-gg-44.webp"},{"id":"nn-gg-45","type":"single","stem":"本滩不宜会船的航段（         ）。","options":["11#至9#","9#至7#","6#至4#","津贵37#附近"],"answer":1,"ref":"","note":"","img":"images/nn-gg-45.webp"},{"id":"nn-gg-46","type":"single","stem":"本滩7#至 37#标志靠左岸一侧暗礁水深（         ）米（贵港枢纽 42.6 米时）。","options":["0.8","1.5","1.0","2.0"],"answer":0,"ref":"","note":"","img":"images/nn-gg-46.webp"},{"id":"nn-gg-47","type":"single","stem":"本滩船舶上航至 7#白标后应继续沿（         ）标行驶，防止船舶受水流冲压向（         ）红标头座石。","options":["8#；9#","9#、10#；8#","航道中间;9#","8#;10#"],"answer":1,"ref":"","note":"","img":"images/nn-gg-47.webp"},{"id":"nn-gg-48","type":"judge","stem":"判断题：本滩中洪水下行时，船达 11#标，应调整航速靠10#标下行。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/nn-gg-48.webp"},{"id":"nn-gg-49","type":"judge","stem":"判断题：本滩船舶下行至 5#标转向主流居中行驶至 1#标。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-49.webp"},{"id":"nn-gg-50","type":"judge","stem":"判断题：本滩滩长 7 公里，是横贵线的险滩之一，不适宜夜航。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/nn-gg-50.webp"},{"id":"nn-gg-51","type":"single","stem":"本滩三撑石位于航道入口（         ），受（         ） 水影响，过往船舶经过此处时要注意避让。","options":["中央；回流","左侧；背脑","右侧；扫弯","中央；扫弯"],"answer":1,"ref":"","note":"","img":"images/nn-gg-51.webp"},{"id":"nn-gg-52","type":"single","stem":"本滩头座石位于航道的（         ） ，受（         ）水影响严重，是本滩事故的多发点。","options":["左侧；背脑","右侧；背脑","右侧；扫弯","左侧；扫弯"],"answer":2,"ref":"","note":"","img":"images/nn-gg-52.webp"},{"id":"nn-gg-53","type":"single","stem":"本滩大林脚航道在（         ）至（         ）左岸一侧水域，注意避让暗礁。","options":["六河坑；芝麻沙2#","芝麻沙2#；芝麻沙1#","津贵36#示位标；津贵35#示位标","津贵36#示位标；孖坑"],"answer":0,"ref":"","note":"另一版题库答案为：津贵36#示位标；孖坑","img":"images/nn-gg-53.webp"},{"id":"nn-gg-54","type":"single","stem":"上、下行船舶进入本滩大林脚航道时，应该将芝麻沙 2#白色侧面标分别置于本船的（         ）、（         ）舷通过。","options":["左；右","右；左","右；右","左；左"],"answer":0,"ref":"","note":"","img":"images/nn-gg-54.webp"},{"id":"nn-gg-55","type":"single","stem":"船舶进入本滩大林脚航道，应注意控制航速，靠（         ）岸行驶，保持与左岸（         ）米距离。","options":["右；15","左；80","左；15","右；80"],"answer":2,"ref":"","note":"","img":"images/nn-gg-55.webp"},{"id":"nn-gg-56","type":"single","stem":"下航船舶进入本滩大林脚航道驶离孖坑后应离岸（         ）米行驶至 35#示位标。","options":["15","60","100","80"],"answer":3,"ref":"","note":"","img":"images/nn-gg-56.webp"},{"id":"nn-gg-57","type":"single","stem":"下行船进入本滩大林脚航道后，应注意避让（         ）等（         ）侧暗礁。","options":["水碾石、海狗石；左","文波石、元藤坪；右","水碾石、海狗石；右","元藤坪、塘泡石；中间"],"answer":2,"ref":"","note":"","img":"images/nn-gg-57.webp"},{"id":"nn-gg-58","type":"single","stem":"本滩船舶下行至 35# 标后，船首向（         ）转向，以（         ）标为目标行驶","options":["左边；33#","右边；34#","左边；34#","居中；34#"],"answer":1,"ref":"","note":"","img":"images/nn-gg-58.webp"},{"id":"nn-gg-59","type":"single","stem":"本滩水碾石（         ）米，距六河坑下游约（         ）米。","options":["50×2.85+；100","50×2.85+；50","50×1.85+；150","30×1.85+；150"],"answer":0,"ref":"","note":"","img":"images/nn-gg-59.webp"},{"id":"nn-gg-60","type":"single","stem":"本滩3#白标内侧航路，吃水超过（         ）米的船舶不可进入行驶。","options":["3.8","3.6","3.2","2.1"],"answer":2,"ref":"","note":"","img":"images/nn-gg-60.webp"},{"id":"nn-gg-61","type":"single","stem":"本滩如走主航道下行，船达六河坑后的下行方法：船达津贵 36#示位标以（         ）为目标行驶，船到该标后以（         ）为目标行驶。","options":["芝麻沙2#白标；芝麻沙1#红标","孖坑；芝麻沙1#红标","立中","沿北岸；沿左岸"],"answer":0,"ref":"","note":"","img":"images/nn-gg-61.webp"},{"id":"nn-gg-62","type":"single","stem":"本滩船达六和坑后下行方法：船到芝麻沙 1#红标驶离孖坑后，以（         ）为目标距岸约（         ）米下行，船达该标以（         ）为目标行驶出滩尾。","options":["立中；80；沿左边","津贵35#示位标；80；津贵34#示位标","津贵35#示位标；15；津贵34#示位标","回神步；80；津贵34#示位标"],"answer":1,"ref":"","note":"","img":"images/nn-gg-62.webp"},{"id":"nn-gg-63","type":"judge","stem":"判断题：船舶走主航道，在驶离芝麻 2#白标后，应以芝麻沙 1#红标为目标行驶，其主要是注意避让航道右侧的青草石。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/nn-gg-63.webp"}]},{"id":"nn-gg-c4","name":"白鸽坑至石洲角","questions":[{"id":"nn-gg-64","type":"single","stem":"白鸽坑至石洲角航段位于（     ）下距（         ），航道弯曲，但水流平缓。","options":["伶俐下游5公里、六景约8公里","伶俐下游6公里、六景约10公里","伶俐下游7公里、六景约6公里"],"answer":1,"ref":"","note":"","img":"images/nn-gg-64.webp"},{"id":"nn-gg-65","type":"single","stem":"白鸽坑至石洲角航段枯水期夜航，一旦航向吊向点选择不明确极易造成（         ）发生海损事故。","options":["船舶偏航触礁","碰撞","岸吸"],"answer":0,"ref":"","note":"","img":"images/nn-gg-65.webp"},{"id":"nn-gg-66","type":"single","stem":"正常水位高程的白鸽坑至石洲角航段，左、右岸共配布有2座助航标志，位置分別是左岸（         ）和右岸（         ）引导船舶航行。","options":["白鸽坑下59#示位标、黄蜂石60#示位标","白鸽坑下61#示位标、黄蜂石60#示位标","白鸽坑下60#示位标、黄蜂石59#示位标"],"answer":2,"ref":"","note":"","img":"images/nn-gg-66.webp"},{"id":"nn-gg-67","type":"single","stem":"白鸽坑至石洲角航段左岸主要碍航物有（         ）和右岸离岸10米外的三九石等碍航物。","options":["59#标底坭洲和石洲","60#标底坭洲和石洲","58#标底对开坭洲和沙滩"],"answer":1,"ref":"","note":"","img":"images/nn-gg-67.webp"},{"id":"nn-gg-68","type":"single","stem":"白鸽坑至石洲角航段，白鸽坑下60#示位标夜间灯色是（         ）","options":["四闪红光","四闪白光","单闪红光","(5)双闪白光"],"answer":1,"ref":"","note":"","img":"images/nn-gg-68.webp"},{"id":"nn-gg-69","type":"single","stem":"白鸽坑至石洲角航段，黄蜂石59#示位标夜间灯色是（         ）","options":["四闪红光","四闪白光","单闪红光","(5)双闪白光"],"answer":0,"ref":"","note":"","img":"images/nn-gg-69.webp"},{"id":"nn-gg-70","type":"single","stem":"白鸽坑至石洲角航段，三九石处于航道的哪些位置（         ）","options":["左岸","右岸","河中央"],"answer":1,"ref":"","note":"","img":"images/nn-gg-70.webp"},{"id":"nn-gg-71","type":"single","stem":"在该航段，左岸60#标底的碍航物是（         ）","options":["坭洲","沙洲","石洲"],"answer":0,"ref":"","note":"","img":"images/nn-gg-71.webp"},{"id":"nn-gg-72","type":"single","stem":"白鸽坑至石洲角航段，水位高程常年保持多少（         ）米？","options":["57一60","58一61","59一62"],"answer":2,"ref":"","note":"","img":"images/nn-gg-72.webp"},{"id":"nn-gg-73","type":"single","stem":"白鸽坑至石洲角航段，枯水期（水位57米高程以下）哪些位置不宜会船？","options":["津贵60#标一津贵59号标","南甲冲一石洲角","三九石一黄蜂石"],"answer":1,"ref":"","note":"","img":"images/nn-gg-73.webp"},{"id":"nn-gg-74","type":"single","stem":"在该航段，正常水位时你船下行至左岸60#标时，船首前方最好的吊向点是什么？","options":["石洲角","黄蜂石59#标","南甲冲"],"answer":1,"ref":"","note":"","img":"images/nn-gg-74.webp"},{"id":"nn-gg-75","type":"single","stem":"你船夜航下行至左岸白鸽坑下60#标时见到前方一船显示绿闪光灯，并正在向右岸移动，你应釆取什么避让措施？","options":["立即减速闪绿光灯","加快车速闪绿光灯","立即减速闪绿光灯并鸣放会船声号"],"answer":2,"ref":"","note":"","img":"images/nn-gg-75.webp"},{"id":"nn-gg-76","type":"single","stem":"白鸽坑至石洲角航段，枯水期（水位57米高程以下）浅点在哪些位置？","options":["在左岸石洲角往上游延伸约60米，水沫线对开约70米处","在右岸石洲角往上游延伸约60米，水沫线对开约70米处","在左岸石洲角往上游延伸约100米，水沫线对开约150米处"],"answer":0,"ref":"","note":"","img":"images/nn-gg-76.webp"},{"id":"nn-gg-77","type":"single","stem":"白鸽坑至石洲角在水位57米高程以下枯水期，船舶上航驶达石洲角对开时以（  ）为目标将船驶过右岸，保持适当岸距沿岸航至（         ）后驶过左岸航行。","options":["右岸58#示位标;痾屎石","右岸59#示位标;痾屎石","左岸59#示位标;青草石"],"answer":1,"ref":"","note":"","img":"images/nn-gg-77.webp"},{"id":"nn-gg-78","type":"single","stem":"白鸽坑至石洲角在水位57米高程以下枯水期，你船下行至左岸60#示位标时，看见上行船巳驶离石洲角，应采取（         ）及早明确会船意图，必要时等候来船通过（         ）后方可下航。","options":["立即停车；南甲冲","立即减速；南甲冲","立即停车；黄蜂石"],"answer":1,"ref":"","note":"","img":"images/nn-gg-78.webp"},{"id":"nn-gg-79","type":"single","stem":"白鸽坑至石洲角在水位57米高程以下枯水期，你船上行至（         ）时，见到下航船已驶离左岸60#标时，应釆取立即减速将船停在（         ），并注意及早明确会船意图，必要时等候下航船驶离滩尾后方可上航。","options":["石洲角下游；右侧航道","石洲角下游；航道中间","石洲角下游；左侧航道"],"answer":2,"ref":"","note":"","img":"images/nn-gg-79.webp"},{"id":"nn-gg-80","type":"subjective","stem":"该滩事故多发期在什么水位期？该航段枯水期（水位57米高程以下）浅点在那些位置？","options":[],"answer":-1,"ref":"水位57米以下高程是事故的多发期\n枯水期浅点在左岸石洲角往上游延伸约60米，水沫线对开约70米处","note":"","img":""},{"id":"nn-gg-81","type":"subjective","stem":"该滩枯水期（水位57米高程以下），船舶下航驶离左岸57号标后如何操纵引航？","options":[],"answer":-1,"ref":"逐步调整航向将船首左舷以黄蜂石57#标为吊向点下行\n船到黄蜂石57#标，逐步转向左岸坑口石55#标为吊向点沿主流下行，沿途注意避开牛栏石","note":"","img":""}]},{"id":"nn-gg-c5","name":"蠄崂沙航段","questions":[{"id":"nn-gg-82","type":"single","stem":"船舶下行过该滩，下行驶过观音山下游后逐步调整航向以（         ）和（         ）为目标下航驶出滩尾。","options":["津贵42#、蠄崂沙1#标","津贵42#、蠄崂沙2#标","蠄崂沙2#标、蠄崂沙1#标"],"answer":2,"ref":"","note":"","img":"images/nn-gg-82.webp"},{"id":"nn-gg-83","type":"single","stem":"该滩段的蠄崂沙和飘竹石洲的水位高程分别是多少（         ）？","options":["40.55米和40.03米","42米和40.03米","40.55米和43米"],"answer":0,"ref":"","note":"","img":"images/nn-gg-83.webp"},{"id":"nn-gg-84","type":"single","stem":"该滩在航道的左右岸分别配佈了（         ）示位标和水面上（         ）侧面浮标。","options":["2座、3座","3座、2座","4座、3座"],"answer":0,"ref":"","note":"","img":"images/nn-gg-84.webp"},{"id":"nn-gg-85","type":"single","stem":"该滩在航道的左侧配佈了（         ）示位标和（         ）侧面浮标","options":["劳山43#、飘竹石洲1#","观音山43#、飘竹石洲1#","观音山43#、蠄崂沙1#标"],"answer":1,"ref":"","note":"","img":"images/nn-gg-85.webp"},{"id":"nn-gg-86","type":"single","stem":"该滩在航道的右侧配佈了（         ）侧面浮标和（         ）示位标。","options":["蠄崂沙1#标、蠄崂沙2#标；津贵42#","蠄崂沙1#标、飘竹石洲1#；津贵42#","蠄崂沙1#标、蠄崂沙2#标；津贵43#"],"answer":0,"ref":"","note":"","img":"images/nn-gg-86.webp"},{"id":"nn-gg-87","type":"single","stem":"西津枢纽坝下至贵港枢纽坝面的航道尺度是（         ）","options":["3.50米乂80米乂550米(水深、航宽、曲度半径)","4.00米乂80米乂550米(水深、航宽、曲度半径)","3.00米乂80米乂550米(水深、航宽、曲度半径)"],"answer":0,"ref":"","note":"","img":"images/nn-gg-87.webp"},{"id":"nn-gg-88","type":"single","stem":"西津枢纽坝下至贵港枢纽坝面的正常蓄水位高程是（         ），最高可达43米。","options":["42.60米","41.60米","40.60米"],"answer":0,"ref":"","note":"","img":"images/nn-gg-88.webp"},{"id":"nn-gg-89","type":"single","stem":"该滩的主航道在什么（         ）位置？","options":["靠右岸一侧","靠左岸一侧","靠河床中央"],"answer":1,"ref":"","note":"","img":"images/nn-gg-89.webp"},{"id":"nn-gg-90","type":"single","stem":"该滩的河床底质主要是（         ）？滩长约（         ）米？","options":["低质为沙石混合型长约1000米","坭质型长约600米","石灰岩型长约1500米"],"answer":0,"ref":"","note":"","img":"images/nn-gg-90.webp"},{"id":"nn-gg-91","type":"single","stem":"该滩飘竹石洲水位高程42.60米时深度约（         ）米。","options":["2.00米","1.00米","2.60米"],"answer":2,"ref":"","note":"","img":"images/nn-gg-91.webp"},{"id":"nn-gg-92","type":"single","stem":"该滩航道有哪些主要特点（         ）？","options":["航道入口和滩尾弯曲、狭窄且水横流，航路两侧暗礁多，枯水期水浅","航道入口和滩尾顺直、狭窄且水横流，航路两侧暗礁多，枯水期水浅","航道入口和滩尾弯曲、狭窄且水横流，航路两侧暗礁少，枯水期水浅"],"answer":0,"ref":"","note":"","img":"images/nn-gg-92.webp"},{"id":"nn-gg-93","type":"single","stem":"在此滩（         ）航段不宜会船？","options":["船舶尺度大于60米㐅10米(长乂宽)的船舶不宜在蠄崂沙1#标至飘竹石洲航1#段会船","船舶尺度大于60米㐅10米(长乂宽)的船舶不宜在观音山43#至飘竹石洲航段会船","船舶尺度大于60米㐅10米(长乂宽)的船舶不宜在蠄崂沙2#标至飘竹石洲航段会船"],"answer":2,"ref":"","note":"","img":"images/nn-gg-93.webp"},{"id":"nn-gg-94","type":"single","stem":"上行通过该滩，船舶上航至蠄崂沙2#标右侧面标底，要调整船位并以观音山津贵43#示位标为目标行驶，原因是（             ）。","options":["蠄崂沙2#标面有浅滩","有横流和泡水","流急"],"answer":0,"ref":"","note":"","img":"images/nn-gg-94.webp"},{"id":"nn-gg-95","type":"single","stem":"该滩除航道中暗礁外还有航道右侧的（         ）和航道左侧滩尾的飘竹石洲。","options":["芝麻沙","石洲角","蠄崂沙"],"answer":2,"ref":"","note":"","img":"images/nn-gg-95.webp"},{"id":"nn-gg-96","type":"single","stem":"上行该滩，你船上行至飘竹石洲下坭角遇到下行船巳驶达蠄崂沙2#标面时，应釆取立即减速或停车，并与来船联系避让意图，必要时在（         ）等候下航船通过等避让措施。","options":["蠄崂沙下游","飘竹石洲下游","观音山下游"],"answer":1,"ref":"","note":"","img":"images/nn-gg-96.webp"},{"id":"nn-gg-97","type":"single","stem":"你船下行，航行至观音山附近，遇到上行船巳驶达飘竹石洲，并巳操作船舶正在驶过蠄崂沙1#标右侧标时，你应采取立即减速或停车并与来船联系统一避让意图，必要时在（         ）上游等候上航船通过蠄崂沙2#标右侧标后最下航。","options":["飘竹石洲","观音山","蠄崂沙"],"answer":1,"ref":"","note":"","img":"images/nn-gg-97.webp"}]}]},{"id":"gg-bmdj","name":"贵港 → 白马大角（贵港航区）","chapters":[{"id":"gg-bmdj-c1","name":"大藤峡坝下至桂平三江口航段","questions":[{"id":"gg-bmdj-1","type":"single","stem":"大藤峡船闸闸室有效尺度为____.","options":["280mx34mx5.8m","200mX23mX3.5m","300mx23mx3.5m"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-2","type":"single","stem":"大藤峡船闸设计通航最大船舶为____吨级.","options":["1000","2000","3000"],"answer":2,"ref":"","note":"","img":""},{"id":"gg-bmdj-3","type":"single","stem":"闸室两侧水尺的作用是什么？","options":["看水深","看水位","看船舶的吃水"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-4","type":"single","stem":"根据视频提供的信息，本船所在位置，船舶航行时，应怎样选择航路航行？","options":["上行走缓流","居中航行","下行走中间"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-5","type":"single","stem":"本船右侧停靠的设施叫什么？","options":["码头","靠船墩","岸堤"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-5.webp"},{"id":"gg-bmdj-6","type":"single","stem":"前面跨江大桥的桥名是______ ,该跨江大桥净高为______ 。","options":["大藤峡水利枢纽工程坝下交通桥;18米","肇庆二桥;10米","肇庆大桥;11米"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-6.webp"},{"id":"gg-bmdj-7","type":"single","stem":"前方桥梁两侧菱形的标牌为____.","options":["桥涵标牌","通航净空标牌","侧面标"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-7.webp"},{"id":"gg-bmdj-8","type":"single","stem":"下引航道的水流淤积情况为_____","options":["水流平静无泥沙淤积","水流紊乱有泥沙淤积","水流平静，下口门易淤积"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-8.webp"},{"id":"gg-bmdj-9","type":"single","stem":"本船右前方水泥柱子上的标志为___,该标志 的作用为_____;该位置的流态存在____.","options":["桥涵标牌;指示左右可通航 ;漩水","通航净空标牌;指示航道的左侧 ;回流","侧面标;指示航道的边界;横流"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-9.webp"},{"id":"gg-bmdj-10","type":"single","stem":"本船右前方岸上火药库小房作用为____","options":["吊向点","转向点","民房"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-10.webp"},{"id":"gg-bmdj-11","type":"single","stem":"本船右前方岸标为____，该标志的灯质为____，该标志的作用为_____","options":["侧面标；三闪","示位标；四闪红光；船舶定向和定位","泛滥标；双闪；标示障碍物的位置"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-11.webp"},{"id":"gg-bmdj-12","type":"single","stem":"本船右前方岸边水尺为____","options":["桥梁通航高度标尺","看水位的","看水深的"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-12.webp"},{"id":"gg-bmdj-13","type":"single","stem":"前方桥梁名称为______","options":["西江大桥","桂平大桥","桂平黔江大桥"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-13.webp"},{"id":"gg-bmdj-14","type":"single","stem":"本船右前方桥孔为____","options":["上行桥孔","下行桥孔","双向通航桥孔"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-14.webp"},{"id":"gg-bmdj-15","type":"single","stem":"该桥净高为____，净宽为____","options":["10m,65m","11m,50m","12m,60m"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-15.webp"},{"id":"gg-bmdj-16","type":"single","stem":"大桥上下游均有浮标， 这些浮标的作用是______。","options":["指引航路","防碰撞","指示碍航物"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-17","type":"single","stem":"本船右前方的浮标有______","options":["咸鱼石","三撑石","头座石"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-17.webp"},{"id":"gg-bmdj-18","type":"single","stem":"视频中所在水域为_____","options":["郁江","桂江","黔江"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-18.webp"},{"id":"gg-bmdj-19","type":"single","stem":"根据铜鼓滩航道图说出本船右前方红标的障碍物？","options":["三排石","担干石","锁链石"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-19.webp"},{"id":"gg-bmdj-20","type":"single","stem":"前方弯道水域为______","options":["将军滩","铜鼓滩","蓑衣滩"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-20.webp"},{"id":"gg-bmdj-21","type":"single","stem":"前方右岸处的岸石叫_____","options":["上罗耀石","担干石","铜鼓滩企人角"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-21.webp"},{"id":"gg-bmdj-22","type":"single","stem":"本船前方右侧岸角为_____","options":["羊栏角","长滩角","浔洲尾"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-22.webp"},{"id":"gg-bmdj-23","type":"single","stem":"本船左前方小洲为____","options":["仁寿洲","大沙","子沙"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-23.webp"},{"id":"gg-bmdj-24","type":"single","stem":"根据视频本船左前方交汇的水域为____，右前方交汇的水域为____","options":["黔江/郁江","郁江/浔江","浔江/郁江"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-24.webp"},{"id":"gg-bmdj-25","type":"single","stem":"前方右侧浮标为______;该标 的作用为_____;该标 的灯质为_____","options":["侧面标 ;标示航道的右侧界限;闪红光","视位标;标;示航道的左侧界限 ;闪蓝光","左右通航标;标示航标的左右侧可通航;三闪绿光"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-25.webp"}]},{"id":"gg-bmdj-c2","name":"羊栏滩","questions":[{"id":"gg-bmdj-26","type":"single","stem":"本滩当黔江有大洪水时，水流主要冲压右岸的____位置。","options":["民泰石、水流庙","柳枝沙头","东塔对岸","浔洲尾"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-26.webp"},{"id":"gg-bmdj-27","type":"single","stem":"本船所在水域为_______。","options":["铜鼓滩","羊栏滩","飞凤角"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-27.webp"},{"id":"gg-bmdj-28","type":"single","stem":"本滩黔江有大洪水时，船舶下行至浔洲尾时，船首应向              转，以_____为吊向点行驶。","options":["右；民泰石","左；民泰石","左；子沙尾左右通航标","右；子沙尾左右通航标"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-28.webp"},{"id":"gg-bmdj-29","type":"judge","stem":"当本滩洪水上涨至 8 米时，出现急流现象，船舶上行感觉困难。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-29.webp"},{"id":"gg-bmdj-30","type":"single","stem":"桂平至贵港枢扭最高蓄水高程是____米。","options":["42.6","20.2","30.5","62.1"],"answer":2,"ref":"","note":"","img":""},{"id":"gg-bmdj-31","type":"single","stem":"桂平水利枢纽正常水位为_____米。","options":["29.6","42.6-42.76","20.2-18.6","65.5-66"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-32","type":"single","stem":"本滩枯水期船舶上行，船达白沙边沿航道左侧行驶至(          )，并注意观察来船动态，在无碍顺航道船舶行驶时过河沿右岸行驶至(          )。","options":["柳枝沙尾白标；羊栏角","子沙左右通航标；羊栏角","子沙左右通航标；民泰石红标","柳枝沙头白标；民泰石红标"],"answer":3,"ref":"","note":"","img":"images/gg-bmdj-32.webp"},{"id":"gg-bmdj-33","type":"single","stem":"本滩枯水期上行，船达白沙边沿航道左侧行驶至柳枝沙头白标，船舶抛江过河到右岸，沿右岸行驶，行驶至(          ) 以(          )为目标行驶出滩头。","options":["民泰石红标；浔洲尾76号示位标","民泰石红标；不必抛江继续沿南行驶出滩头","羊栏角；浔洲尾76号示位标","民泰石红标；子沙左右通航标"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-34","type":"single","stem":"本滩在航道的右侧水面上共设置有____标_____座，形状为_____。","options":["示位；1；塔","示位；2；塔","侧面；2；锥","侧面；1；罐"],"answer":3,"ref":"","note":"","img":"images/gg-bmdj-34.webp"},{"id":"gg-bmdj-35","type":"single","stem":"羊栏滩东塔一带冬季的河面易出现什么天气现象？","options":["雷雨大风","浓雾","沙尘"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-n1","type":"single","stem":"本滩是多发雾区，上行船舶应在_____左岸一侧、下行船舶在_____一侧避雾。","options":["浔州尾至太平沙左岸一侧；㓥牛坪至黎冲塘","柳枝沙头；浔州尾至太平沙右岸","㓥牛坪至黎冲塘；浔州尾至太平沙左岸","柳枝沙尾+；浔州尾至太平沙右岸侧"],"answer":2,"ref":"","note":"","img":""}]},{"id":"gg-bmdj-c3","name":"蓑衣滩","questions":[{"id":"gg-bmdj-37","type":"single","stem":"根据视频本船右前方的示位标处有_____","options":["狗头石","瓜棚石","鸳鸯石"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-38","type":"single","stem":"根据视频本船右前方的示位标附近有_____","options":["狗头石","鸳鸯石","水泡石"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-38.webp"},{"id":"gg-bmdj-39","type":"single","stem":"根据视频此时本船船位为____","options":["三七分心","五五分心","四六分心"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-39.webp"},{"id":"gg-bmdj-40","type":"single","stem":"本航段的水流特点是______","options":["水位越枯水流越急","中水期水流最急","水流较平缓"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-40.webp"},{"id":"gg-bmdj-41","type":"single","stem":"本船左前方水域的障碍有______","options":["木化沙","盐保沙","干洲"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-41.webp"},{"id":"gg-bmdj-42","type":"single","stem":"本船所处的位置是_____","options":["姑翁滩","羊栏滩","蓑衣滩"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-42.webp"},{"id":"gg-bmdj-43","type":"single","stem":"右前方红浮标处有______","options":["水泡石","铜鼓石","猪乸角"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-43.webp"},{"id":"gg-bmdj-44","type":"single","stem":"前方右侧的示位标处较大的洲为_____","options":["上泥洲","下泥洲","下角石"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-44.webp"},{"id":"gg-bmdj-45","type":"single","stem":"上泥洲下游处坑口为_____","options":["东叶坑","盐保坑","圩坑"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-45.webp"},{"id":"gg-bmdj-46","type":"single","stem":"东叶坑下游处的小洲为_____","options":["上泥洲","下泥洲","下角石"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-46.webp"},{"id":"gg-bmdj-47","type":"single","stem":"前方右侧的山峰为_____，该山可做为船舶航行的_____。","options":["凤凰山/转向点","木山角/转折点","牛儿岭/吊向点"],"answer":2,"ref":"","note":"","img":""},{"id":"gg-bmdj-48","type":"single","stem":"本滩水面平石狗头礁石面，木化沙水深是_____米。","options":["2.6","1.0","2.0","3.0"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-48.webp"},{"id":"gg-bmdj-49","type":"single","stem":"本滩枯水期下行方法，船达长洲 70#示位标后以_____ 标为目标行驶，防止流压_____。","options":["白浪角红；槟榔石","木化沙头白；白浪角红标","白浪角红；木化沙头白标","木化沙头白；槟榔石"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-49.webp"},{"id":"gg-bmdj-50","type":"single","stem":"本滩枯水期下行方法，船到白浪角红标，以_____ 出滩尾。","options":["槟榔石白标为目标沿主流行驶","缓流行驶","东叶坑口为目标","东叶坑口为目标沿主流行驶"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-50.webp"},{"id":"gg-bmdj-51","type":"judge","stem":"本滩上行船舶到达白浪角红标时，当白浪角红标刚到一半船位时，马上转向过河沿左岸行驶，这样操作比较容易通过本滩。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-51.webp"},{"id":"gg-bmdj-52","type":"single","stem":"本滩水面平东叶坑坭洲面时，木化沙深度不少于_____。","options":["6","7","8","9"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-52.webp"}]},{"id":"gg-bmdj-c4","name":"姑翁滩","questions":[{"id":"gg-bmdj-53","type":"single","stem":"冬季枯水若发现姑翁滩有浓雾时，下行船应在____ 掉头锚泊，上行船应干洲边或平田湾头锚泊。","options":["定江洲附近","连子角","上横龙"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-54","type":"single","stem":"本船正前方左岸的村庄名称叫_____ 。","options":["思界村","盘龙村","平田村"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-55","type":"single","stem":"盘龙村尾是下行船的______ 。","options":["吊向点","转向点","景观点"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-55.webp"},{"id":"gg-bmdj-56","type":"single","stem":"本船右前方的石头高4米，设灯塔一座，该石头是_____ 。","options":["上横龙","下横龙","曾排角"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-56.webp"},{"id":"gg-bmdj-57","type":"single","stem":"洪水期，横龙石被淹没，姑翁滩主航道形成局部急流水域，下行船过石梯后必须随庙口泥角白标沿着左侧回流泡水、水槽行驶，以防触碰_____礁石。","options":["流鹅石","连子石","横龙石"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-57.webp"},{"id":"gg-bmdj-58","type":"single","stem":"下列碍航物中不是姑翁滩的是_____ 。","options":["福建坑口硬沙","下横龙石","黄牛背"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-59","type":"single","stem":"姑翁滩最大的回流水是_____。","options":["盐宝沙头","葫芦沙","流鹅石"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-60","type":"single","stem":"前方灯桩下石头名称是_____。","options":["下横龙","曾排角","葫芦沙"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-60.webp"},{"id":"gg-bmdj-61","type":"single","stem":"本滩洪水期造成船舶操纵困难的是_____航段。","options":["横龙石至增排角","莲子角(55#)示位标至增排角(53#)示位标","定光洲至莲子角","自背洲至平田"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-61.webp"},{"id":"gg-bmdj-62","type":"single","stem":"本滩中洪水期事故多发的水域是____地段。","options":["横龙石","莲子角","定光洲","自背洲"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-62.webp"},{"id":"gg-bmdj-63","type":"single","stem":"本滩夜航下行操作方法是：船舶到达定光州 56#示位标后以_____为目标行驶，驶离该标沿主流驶至53#示位标，船达 53#标以_____为目标行驶出滩尾。","options":["横龙石；增排角","莲子角55#示位标；自背洲 52#、平田湾51#示位标","增排角；平田湾","莲子角；增排角"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-64","type":"single","stem":"本滩水位上涨到 8 米时，定光洲至木圭街边上游一带水域会产生一股较大的____，船舶航经该处时应加以注意。","options":["急流水","扫弯水","回流","泡水"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-64.webp"},{"id":"gg-bmdj-65","type":"single","stem":"本滩水位上涨到 4 米时，水流主要是流压___石和箩笃石。","options":["黄牛背","横龙","马房","庙口"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-65.webp"},{"id":"gg-bmdj-66","type":"single","stem":"本滩船舶下行操作方法：船舶到达定光州 56#标后以____为目标行驶，船达该标后____，当听到船头水声后，适当用车并____，船过增排角分别以____为目标在航道居中行驶出滩尾。","options":["下横龙 54#标；适当减低车速；打两手左舵；52#、51#号标","莲子角55#标；适当减低车速；打两手右舵；52#、51#号标","曾排角53#标；适当减低车速；打两手右舵；52#、51#号标","下横龙54#标；适当增大车速；打两手左舵；52#、51#号标"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-66.webp"},{"id":"gg-bmdj-n2","type":"single","stem":"船舶过了曾排角船首对着平田湾对面灰窑车，避开_______ 。","options":["流鹅石","曾排角","下横龙"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-n2.webp"}]},{"id":"gg-bmdj-c5","name":"将军滩","questions":[{"id":"gg-bmdj-67","type":"single","stem":"左侧圆圈内灯桩下的石洲高5.8米，该石洲名称叫_____ 。","options":["三洲角","三洲","高石"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-67.webp"},{"id":"gg-bmdj-68","type":"single","stem":"请说出左侧圆圈内坑口名称____。","options":["乌江坑","罗冲桥","南步坑"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-68.webp"},{"id":"gg-bmdj-69","type":"single","stem":"前方位于航道中间的沙滩名称是 ______。","options":["上暗沙","下暗沙","将军沙"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-69.webp"},{"id":"gg-bmdj-70","type":"single","stem":"将军沙位于_____ 。","options":["乌江坑口上游","平南一桥下游","乌江坑口与平南一桥之间"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-70.webp"},{"id":"gg-bmdj-71","type":"single","stem":"右岸圆圈内标志的作用是 ____。","options":["表示当地水位","表示桥梁通航高度","表示干出高度"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-71.webp"},{"id":"gg-bmdj-72","type":"single","stem":"将军滩水流向____，特别是洪水期，水流急，船舶通过平南一桥时应适当挂高船位。","options":["右岸","中间","左岸"],"answer":0,"ref":"","note":"考试系统版答案为：南","img":""},{"id":"gg-bmdj-73","type":"single","stem":"前方南步坑面有一浅点高0.7米，设红浮标一个，该红浮标是_____。","options":["上暗沙","下暗沙","晒禾坪"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-73.webp"},{"id":"gg-bmdj-74","type":"single","stem":"前方大桥桥孔属于______ 。","options":["单孔双向通航","双孔双向通航","双孔单向通航"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-74.webp"},{"id":"gg-bmdj-75","type":"single","stem":"右侧红浮标名称是_______ 。","options":["下暗沙","晒禾坪","外秤砣石"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-75.webp"},{"id":"gg-bmdj-76","type":"single","stem":"右侧圆圈内标志表示____。","options":["水下有过江管线","水上有架空管线","锚地"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-76.webp"}]},{"id":"gg-bmdj-c6","name":"大洲-白马大角","questions":[{"id":"gg-bmdj-77","type":"single","stem":"船舶驶过前方大桥时，应当从______驶过。","options":["通航桥孔","任意桥孔","最宽桥孔"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-78","type":"single","stem":"前方桥梁两侧菱形的标牌为____。","options":["桥涵标牌","通航净空标牌","侧面标"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-78.webp"},{"id":"gg-bmdj-79","type":"single","stem":"下行船舶驶过浔江特大桥后，前方黄色的罐型建筑物可作为____。","options":["转向点","吊向点","观测点"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-79.webp"},{"id":"gg-bmdj-80","type":"single","stem":"本船右前方浮标标示水下的石头名称为____。","options":["狗肚石","三撑石","铜锣石"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-80.webp"},{"id":"gg-bmdj-81","type":"single","stem":"前方的罐型建筑物可作为____。","options":["转向点","吊向点","观测点"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-81.webp"},{"id":"gg-bmdj-82","type":"single","stem":"左前方码头名称为____。","options":["华润水泥厂","武林码头","李家庄码头"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-82.webp"},{"id":"gg-bmdj-83","type":"single","stem":"前方山岗名称为_____，可作为_____。","options":["凤凰山/吊向点","元宝山/转向点","猪头岭/观测点"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-84","type":"single","stem":"船舶夜间经过附近时应____提醒船舶注意。","options":["用探照灯向天空照射，鸣放一长声","加速通过","不用采取措施，直接驶过"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-85","type":"single","stem":"右前方港口名称为____。","options":["武林港","华润码头","赤水港"],"answer":0,"ref":"","note":"","img":""},{"id":"gg-bmdj-86","type":"single","stem":"本船左前方的渡口叫______。","options":["南木渡口","黄村渡口","丹竹渡口"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-86.webp"},{"id":"gg-bmdj-87","type":"single","stem":"前方准备进入的险滩名称为______。","options":["羊栏滩","盐蛇滩","姑翁滩"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-87.webp"},{"id":"gg-bmdj-88","type":"single","stem":"此时，船舶行驶的航路为______。","options":["外鸭水行航路","柴槽航路","鹤颈航路"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-88.webp"},{"id":"gg-bmdj-89","type":"single","stem":"左侧白浮标边上的小洲名称为______。","options":["大沙顶","野鬼洲","永贵洲"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-89.webp"},{"id":"gg-bmdj-90","type":"single","stem":"在此航路上行驶船舶应选择在______行驶。","options":["设标航道外","设标航道内","设标航道内外均可"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-90.webp"},{"id":"gg-bmdj-91","type":"single","stem":"前方白浮标左侧为______礁石群，船舶航行时注意不得过于驶入。","options":["南兰尾","北兰尾、龙珠石","牛牯石"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-91.webp"},{"id":"gg-bmdj-92","type":"single","stem":"船舶驶过北兰尾白浮标后应______继续行驶。","options":["居中偏左岸","居中直下","靠右岸"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-92.webp"},{"id":"gg-bmdj-93","type":"single","stem":"前方岸标可作为______。","options":["转向点","吊向点","观测点"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-93.webp"},{"id":"gg-bmdj-94","type":"single","stem":"前方常有船舶在附近______，过往船舶应加强瞭望，统一会让意图，注意避让。","options":["锚泊","横越","捕鱼"],"answer":1,"ref":"","note":"","img":"images/gg-bmdj-94.webp"},{"id":"gg-bmdj-95","type":"single","stem":"本船前方左岸位置的流态是____。","options":["横流","涡流","泡水"],"answer":1,"ref":"","note":"","img":""},{"id":"gg-bmdj-96","type":"single","stem":"前方左岸处的角咀叫_____。","options":["白马大角","铁路角","白沙角"],"answer":0,"ref":"","note":"","img":"images/gg-bmdj-96.webp"},{"id":"gg-bmdj-97","type":"single","stem":"左视角处标示的水尺作用是_____。","options":["主要供上行船舶使用","毫无作用","主要供下行船舶判断能否安全驶过下一航段的关键"],"answer":2,"ref":"","note":"","img":"images/gg-bmdj-97.webp"}]}]},{"id":"bmdj-wz","name":"白马大角 → 梧州（梧州航区）","chapters":[{"id":"bmdj-wz-c1","name":"平南白马至濛江河口","questions":[{"id":"bmdj-wz-1","type":"single","stem":"依据船舶报告制度，梧州新马报告线位于（  ）上游约350-400m，报告线上下游均设有船舶报告提示牌。","options":["白马大角","白马二角","白马三角"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-1.webp"},{"id":"bmdj-wz-2","type":"single","stem":"前方左岸即将经过（  ），该处是下行船的（  ）。","options":["状元坑；吊向点","状元坑；转向点","袁崇焕；转向点"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-2.webp"},{"id":"bmdj-wz-3","type":"judge","stem":"状元坑至白马大角航段航道弯曲，船舶密度大，来往船舶频繁抛江容易造成航向交叉，航经该段应加强瞭望，及时报告船舶动态，正确使用声响信号。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-3.webp"},{"id":"bmdj-wz-4","type":"single","stem":"前方左岸角嘴灯桩处是（  ），下行船要关注该处标示的（  ）作为安全驶过该行段的判断依据。","options":["鹅儿菜；水尺","樟木角；航道尺度","白马大角；水尺"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-4.webp"},{"id":"bmdj-wz-5","type":"single","stem":"无论什么水位，下行船下行通过该角，在选择航路时应当注意？","options":["离大角近点，随弯航行","离大角远点，随弯航行","挂高船位，顺弯航行"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-5.webp"},{"id":"bmdj-wz-6","type":"judge","stem":"此处流态复杂，下行船注意控制好船位，因右岸鱼汕矶一带有丛礁区，故应尽可能靠近白马大角行驶。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-6.webp"},{"id":"bmdj-wz-7","type":"single","stem":"船舶经过该航段发现来船时应当如何避让？①提前用VHF互通信息②鸣放一长声③夜间用探照灯向上空照射④上行船主动避让下行船","options":["①②③","②③④","①②③④"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-7.webp"},{"id":"bmdj-wz-8","type":"single","stem":"该航段是（  ）。","options":["十二矶","狗尾划","盐蛇滩"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-8.webp"},{"id":"bmdj-wz-9","type":"single","stem":"右前方红标标示的是（  ）丛礁区。","options":["外鸭洲","鬼二角","鱼汕矶"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-9.webp"},{"id":"bmdj-wz-10","type":"single","stem":"该航段的主要水流情况是（  ）。","options":["流向鱼汕矶","流向右岸","流航中"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-10.webp"},{"id":"bmdj-wz-11","type":"single","stem":"前方左岸角嘴灯桩处是（  ），此处事故多发，需谨慎驾驶。","options":["二角","樟木角","鹅儿菜"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-11.webp"},{"id":"bmdj-wz-12","type":"single","stem":"前方左岸即将经过（  ），该处是下行船的转向点。","options":["保镬村","新安村","柴头村"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-12.webp"},{"id":"bmdj-wz-13","type":"single","stem":"保镬村至濛江河口共有（  ）个洲？","options":["3","4","5"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-13.webp"},{"id":"bmdj-wz-14","type":"judge","stem":"下行往濛江的船舶，行驶到保镬村，应挂高船位，避免扫落洲头下引水白标。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-14.webp"},{"id":"bmdj-wz-15","type":"single","stem":"该航段入口水流流（   ）岸，然后转流（  ）岸至出尾。","options":["左/右","中/右","右/右"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-15.webp"},{"id":"bmdj-wz-16","type":"single","stem":"右前方红标标示的是（  ）地段。","options":["十二矶","狗尾划","盐蛇滩"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-16.webp"},{"id":"bmdj-wz-17","type":"single","stem":"船舶下行经过党洲尾后，即将进入（  ）。","options":["姑翁滩","走马滩","盐蛇滩"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-17.webp"},{"id":"bmdj-wz-18","type":"single","stem":"船舶自走马滩下行，船位五五分中，至塘冲村渡口时，操右舵，以长洲（   ）示位标为目标，进入黄石新航道。","options":["30#","31#","32#"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-18.webp"},{"id":"bmdj-wz-19","type":"single","stem":"本船即将进入王石滩，该滩设计最低水位（  ）米时，设计水深是4.10米。","options":["20.50","19.50","18.74"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-19.webp"},{"id":"bmdj-wz-20","type":"single","stem":"水记石铁路角拉缆坪平面勒鸡潭航中深（  ）米。","options":["4.90","5.00","6.00"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-20.webp"},{"id":"bmdj-wz-21","type":"single","stem":"黄石滩有（  ）条过江电缆。","options":["1","2","3"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-21.webp"},{"id":"bmdj-wz-22","type":"single","stem":"本船前方红圈内的是（  ），可作为下行的转向点。","options":["王石电线杆","系船浮筒","系船缆桩"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-22.webp"},{"id":"bmdj-wz-23","type":"judge","stem":"黄石滩最易发生事故的位置是长洲31号标附近和勒鸡潭出尾高石航段","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-23.webp"},{"id":"bmdj-wz-24","type":"single","stem":"船舶下行过该滩时，进口的示位标晚上灯质是（   ）。","options":["绿四闪","白四闪","红四闪"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-24.webp"},{"id":"bmdj-wz-n3","type":"single","stem":"王石滩铁山角至铁路角航段共配佈有示位标（  ）座和侧面标（  ）座。","options":["3：2","1；2","3：4"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-n3.webp"}]},{"id":"bmdj-wz-c2","name":"思礼洲至登州尾","questions":[{"id":"bmdj-wz-25","type":"single","stem":"从思礼洲尾至登州尾一共设置了7座示位标；其中左岸设置了（  ）座；右岸设置了（  ）座。","options":["3/4","4/3","2/5"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-25.webp"},{"id":"bmdj-wz-26","type":"single","stem":"前方进入思礼洲水域，是（  ）水域，下行船应沿（  ）行驶。","options":["干支流交汇；左岸","汊河口；右侧汊河道","平流；各自靠右"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-26.webp"},{"id":"bmdj-wz-27","type":"single","stem":"思礼洲水域共设置（  ）座示位标。","options":["5","4","3"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-27.webp"},{"id":"bmdj-wz-28","type":"single","stem":"前方即将经过（  ），有多艘横渡和圩渡船，注意控制航速。","options":["马皇码头渡口","思中码头渡口","大木冲码头渡口"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-28.webp"},{"id":"bmdj-wz-29","type":"single","stem":"思礼洲尾设有一座示位标，晚上灯质是（   ）。","options":["红四闪","白四闪","黄四闪"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-29.webp"},{"id":"bmdj-wz-30","type":"single","stem":"下行船在思礼洲尾遇到从长洲22#（打雀石）的上行船时，应当如何操作？①注意观察登洲方向的来船 ②提前与前方船舶联系③鸣放会船声号","options":["①②","①②③","②③"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-30.webp"},{"id":"bmdj-wz-31","type":"single","stem":"船舶航经思礼洲尾至登州头航段时，应当如何操作？①下行船出思礼洲尾时，注意打雀石来船，及早鸣放会船信号，晚上用探照灯向上空照射；②下行到打雀石，注意登洲方向的来船，及早鸣放会船信号；③上行船避让下行船；④横越船避让顺航道行驶的船舶。","options":["①②③","②③④","①②③④"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-31.webp"},{"id":"bmdj-wz-32","type":"single","stem":"打雀石22号标底水记石新建石平面登洲对开蛤乸石顶，暗礁深约（  ）米","options":["1.20","1.80","2.00"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-32.webp"},{"id":"bmdj-wz-33","type":"single","stem":"登州尾设置了一座（  ）示位标。","options":["白色","红色","黄色"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-33.webp"},{"id":"bmdj-wz-34","type":"judge","stem":"登洲尾至灯竞坑航段多发生碰撞事故，其原因是上下行船舶沒有按习惯航路行驶和没有及早釆取避让措施","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-34.webp"}]},{"id":"bmdj-wz-c3","name":"长洲船闸至梧州界首下行","questions":[{"id":"bmdj-wz-35","type":"single","stem":"船舶到达长洲坝面水域待闸时，应及时了解坝下水位情况，如本船吃水（   ）航道水位，应避免盲目过闸下行。《广西西江航运干线（南宁—梧州航段）船舶航行规则》","options":["低于","超过"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-35.webp"},{"id":"bmdj-wz-36","type":"single","stem":"枯水期进入长洲水利枢纽坝下航段的船舶应保留不少于（  ）米的富余水深。《长洲水利枢纽坝下航段枯水期通航安全管理规定（试行）》（桂海通航[2019]180号）","options":["1","0.8","0.3"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-37","type":"single","stem":"长洲水利枢纽船闸上游通航洪水期最高水位为（  ）m，上游最低通航水位18.60m。《广西西江航运干线（南宁—梧州航段）船舶航行规则》","options":["23.90m","22.00m","24.00m"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-38","type":"single","stem":"根据《广西西江航运干线（南宁—梧州航段）船舶航行规则》“船闸水域船舶航行规定”第三条之规定，船舶在船闸水域航行应：\n①保持正规了望；②谨慎驾驶；③采取安全航速；④船长应当在驾驶台值班。","options":["①②③④","①②③","②③④"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-38.webp"},{"id":"bmdj-wz-39","type":"single","stem":"根据《广西西江航运干线（南宁—梧州航段）船舶航行规则》“船闸水域船舶航行规定”，禁止船舶在（  ）进行过客、过驳作业。\n①闸室内； ②上下引航道； ③口门区水域","options":["①②","②③","①②③"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-39.webp"},{"id":"bmdj-wz-40","type":"single","stem":"前方长洲三四线船闸工程交通桥的通航净高为(  ）米。","options":["10","13","18"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-40.webp"},{"id":"bmdj-wz-41","type":"single","stem":"根据《广西西江航运干线（南宁—梧州航段）船舶航行规则》“船闸水域船舶航行规定”，船舶在引航道内会遇时，（  ）。","options":["进闸船舶应当主动避让出闸船舶","出闸船舶应当主动避让进闸船舶","逆水船舶应当主动避让顺水船舶"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-41.webp"},{"id":"bmdj-wz-42","type":"single","stem":"船闸信号中，红光灯亮时表示（  ）；绿光灯亮时表示（  ）。","options":["准备进出闸；停止进出闸","允许进出闸；停止进出闸","停止进出闸；允许进出闸"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-42.webp"},{"id":"bmdj-wz-43","type":"single","stem":"根据《广西西江航运干线（南宁—梧州航段）船舶航行规则》“船闸水域船舶航行规定”，在靠船墩停靠待过闸的船舶，在闸室充泄水时，必须派专人（  ）。","options":["关注水位变化","看守系船缆绳","瞭头"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-44","type":"single","stem":"资源图红框内的标志表示（  ）。","options":["在此换车叶","禁止船长超32.4米的船舶靠泊","限制靠泊宽度32.4米"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-45","type":"single","stem":"长洲枢纽至云龙大桥全长20公里左右，在该航段自上而下分别建设有（  ）座跨江桥梁，给船舶航行带来一定的影响。","options":["3","4","5"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-45.webp"},{"id":"bmdj-wz-46","type":"single","stem":"前方是梧州西江三桥，通航净高为（  ）米。","options":["10","18","13"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-46.webp"},{"id":"bmdj-wz-47","type":"single","stem":"资源图红圈内的标志，夜间灯色是（  ）","options":["定光绿色","定光红色","定光黄色"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-48","type":"single","stem":"前方是梧州西江大桥，通航净高为（  ）米。","options":["13","10","8"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-49","type":"single","stem":"前方是梧州西江四桥（高旺大桥），其通航净高为（  ）米。","options":["13","18","10"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-50","type":"single","stem":"桂江河口（  ）水域，位于桂江河口出口主航道中间附近，距鸳江桥桥涵标垂线170米，距离上游西江主航道白标227米。","options":["狗仔石","欢喜石","青鱼石"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-50.webp"},{"id":"bmdj-wz-51","type":"judge","stem":"桂江河口对开航道右岸一侧待闸船锚泊区水深足够且远离红标礁石浅点，上行待闸重船应到该区域锚泊。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-51.webp"},{"id":"bmdj-wz-52","type":"single","stem":"《广西西江航运干线（南宁—梧州航段）船舶航行规则》第十八条船舶会让时的特别规定：驶出桂江的船舶，应（  ）在干流上正常行驶的下行船舶。","options":["协助避让","主动避让","协商避让"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-52.webp"},{"id":"bmdj-wz-53","type":"single","stem":"符合前方左侧航标灯质规定（资源图所示）的是（  ）","options":["三闪红光","三闪绿光","三闪黄光"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-53.webp"},{"id":"bmdj-wz-54","type":"single","stem":"此处要注意岸上的过江管线标志，按规定，该水域禁止（  ）。","options":["锚泊","过渡","航行"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-54.webp"},{"id":"bmdj-wz-55","type":"single","stem":"前方桥梁净空高度是（  ）。","options":["22米","18米","10米"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-55.webp"},{"id":"bmdj-wz-56","type":"single","stem":"船舶经过码头渡口水域，应当密切注意渡船的动态，并及时采取措施（  ）。","options":["主动避让","协助避让","协商避让"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-57","type":"single","stem":"前方设红色浮标一座，延伸100米并干出？，该红色浮标是（  ）。","options":["罗网石","锁链石","路尾石"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-58","type":"single","stem":"此航段的航行航标配布上有什么特点？（  ）。","options":["礁石较多,在不同的水位期间调节航道","固定航道航标","随意随时改变航道航标"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-58.webp"},{"id":"bmdj-wz-59","type":"single","stem":"本船左前方的码头名称是（  ）。","options":["中外运仓码头（李家庄）","客运港码头","牛屎码头"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-59.webp"},{"id":"bmdj-wz-60","type":"single","stem":"前方李家庄对开水域事故多发，过往船舶应注意从李家庄码头掉头驶出船舶，上行船应沿（  ）行驶，下行船尽量沿（  ）行驶。","options":["左岸一侧/右岸一侧","左岸白标边线/航道中线","靠右/靠右"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-60.webp"},{"id":"bmdj-wz-61","type":"judge","stem":"在李家庄码头离泊的船舶拟掉头进入航道，需要先上行至最上游泊位以上水域后再掉头，严禁贪图方便从泊位原地掉头。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-61.webp"},{"id":"bmdj-wz-62","type":"judge","stem":"李家庄水域航道有由左岸向右岸的横流，船舶下行经该航段时，应当保持具有足够舵效的安全航速，严禁船舶停车淌航。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-62.webp"},{"id":"bmdj-wz-63","type":"single","stem":"李家庄码头掉头下行的船舶，要注意（  ），防止掉头后船舶过于接近航道右侧，被横流推出航道导致触礁。","options":["使用全速进车掉头","控制掉头半径","将航速降到仅能维持航向"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-63.webp"},{"id":"bmdj-wz-64","type":"single","stem":"前方红色浮标是（  ）碍航物。","options":["罗网石","锁链石","上地石"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-64.webp"},{"id":"bmdj-wz-65","type":"single","stem":"上地石是一个转向点，下行船在该标位点（  ）转向主航道。","options":["左","右","不用"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-65.webp"},{"id":"bmdj-wz-66","type":"single","stem":"前方红浮的名称是（  ）。","options":["香炉石","青鱼石","下鰆鱼石"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-66.webp"},{"id":"bmdj-wz-67","type":"single","stem":"此资源图内的标志，表示什么意思？","options":["水尺","干出高度","净空高度"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-67.webp"},{"id":"bmdj-wz-68","type":"single","stem":"左前方角嘴的名称是（  ），下行船可将其作为（  ）。","options":["龙湾角、转向点","印顶角、吊向点","白沙角、吊向点"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-69","type":"single","stem":"前方一对红、白浮标中红浮标的名称是（   ），白浮标名称是（  ）。","options":["青鱼石、香炉石","青鱼石、鰆鱼石","下鰆鱼石、香炉石"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-70","type":"single","stem":"前方扶典大桥净空高度是（  ）。","options":["18","10","16"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-71","type":"single","stem":"洪水期，白沙角下一带出现（  ）异常水流。","options":["倒水","漩水","泡水"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-72","type":"single","stem":"此航段的流态特点是什么？","options":["礁石较多,流态复杂","航道顺直，水位较深","航道弯曲，流态平缓"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-72.webp"},{"id":"bmdj-wz-73","type":"subjective","stem":"请说出画面中出现所有标志的含义（从左到右）。","options":[],"answer":-1,"ref":"1.闸室内禁止明火\n2.闸门禁止系带\n3.闸室内禁止用锚\n4.进出闸航速不得高于4节/小时\n5.禁止追越。","note":"","img":""},{"id":"bmdj-wz-74","type":"single","stem":"准备通过本航段的下行船舶，应在（  ）水域待闸，在靠船墩并排靠泊时不得超过（  ）排。","options":["思恩洲；2","赤水附近；3","赤水附近；2","发疯洲；2"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-74.webp"},{"id":"bmdj-wz-75","type":"single","stem":"本航段船舶下行出下引航道后要注意流压向航道右侧的（  ）暗礁。","options":["牛船头","兰湾脚","粪箕石洲","中坎石"],"answer":3,"ref":"","note":"","img":"images/bmdj-wz-75.webp"},{"id":"bmdj-wz-76","type":"single","stem":"船舶驶经该桥时（资源图红圈这座桥），下行船应沿（  ） 行驶，上行船应沿（  ）行驶（面向下游从右向左数起）。","options":["第 2 孔；第 3 孔","第 3 孔 ；第 3 孔","第 3 孔；第 2 孔"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-76.webp"},{"id":"bmdj-wz-77","type":"single","stem":"本航段船舶下行出下引航道，通过该桥后（资源图红圈这座桥），应以（  ）为目标行驶。","options":["中坎石","兰湾脚","粪箕石洲","牛船头"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-77.webp"},{"id":"bmdj-wz-78","type":"judge","stem":"当本航段下游水位上涨 到7 米时，满载船舶上行时应注意避让航道边的石坝， 以防触损船舶螺旋桨。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-78.webp"},{"id":"bmdj-wz-79","type":"judge","stem":"本航段上行船舶过了该桥后（资源图红圈这座桥），一直沿右岸上行到船闸引航道是比较安全的。","options":["对","错"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-79.webp"},{"id":"bmdj-wz-80","type":"judge","stem":"本航段下游受扫湾水推压比较严重的地方是中坎石至转船泮。","options":["对","错"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-80.webp"}]},{"id":"bmdj-wz-c4","name":"大利口至桂江河口","questions":[{"id":"bmdj-wz-81","type":"single","stem":"本船右前方（资源图所示）红色的航标是（  ）标？该航标设置在障碍物靠航道一侧，标示航道侧面界限。","options":["侧面标","专用浮标","示位标"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-81.webp"},{"id":"bmdj-wz-82","type":"single","stem":"本船左前方红圈内的标志，表示什么？","options":["水尺","干出高度","净空高度"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-83","type":"single","stem":"本船左侧红色圆圈内（资源图所示）的航标是（  ）标？","options":["示位标","沿岸标","过河标"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-83.webp"},{"id":"bmdj-wz-84","type":"single","stem":"从大利口至桂江河口途径（  ）座桥，其中（  ）桥的净空高度最低。","options":["5；桂江一桥","4；桂江二桥","4；紫竹桥"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-84.webp"},{"id":"bmdj-wz-85","type":"single","stem":"请判断前方所见桥梁是（  ）桥，通航净高（  ）米。","options":["紫竹大桥；10","莲花大桥；13","紫竹大桥；8"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-85.webp"},{"id":"bmdj-wz-86","type":"single","stem":"本船右前方红色圆圈内（资源图所示）的标志是（  ）标。","options":["禁止驶入","停止让行","禁止通行"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-86.webp"},{"id":"bmdj-wz-87","type":"single","stem":"本船左前方红色圆圈内（资源图所示）的标志是（  ）标。","options":["禁止驶入","停止让行","禁止通行"],"answer":2,"ref":"","note":"","img":"images/bmdj-wz-87.webp"},{"id":"bmdj-wz-88","type":"single","stem":"此资源图代表（  ）。","options":["架空管线","水底管线","过江电缆"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-88.webp"},{"id":"bmdj-wz-89","type":"single","stem":"本船左舷准备经过：（   ），对开有滑槽，航道变窄，禁止会船。","options":["中船桂江造船有限公司","梧州市交通职业技术学校","新民粮库"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-90","type":"single","stem":"请判断前方所见桥梁是（  ）通航净高（  ）米。","options":["桂江一桥；8","桂江二桥；7","莲花大桥；8"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-90.webp"},{"id":"bmdj-wz-91","type":"single","stem":"本船右舷岸上标志表示（  ）。","options":["注意危险","瞭望点","停船受检"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-91.webp"},{"id":"bmdj-wz-92","type":"single","stem":"该航段属于山区航段，夜航时山影大，可利用的吊向点少，所以下行要留意岸上的（  ）。","options":["过河标","侧面标","示位标"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-93","type":"single","stem":"本船右舷即将经过（  ），夜航时注意灯光干扰。","options":["珠海港（梧州）","港联公司富民码头","河西码头"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-94","type":"single","stem":"本船左舷的是（  ）。","options":["四恩寺","龙母庙","谭公庙"],"answer":1,"ref":"","note":"","img":"images/bmdj-wz-94.webp"},{"id":"bmdj-wz-95","type":"judge","stem":"下行经此处，应及时报告船舶动态。防止在桂江河口桥区与来船形成紧迫局面。","options":["对","错"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-96","type":"single","stem":"本船右舷即将经过（  ），此时一定要注意航道上有无游泳爱好者。","options":["梧州体训基地","梧州游泳场","鸳江丽港"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-97","type":"judge","stem":"此处事故多发，流态扫弯，应挂高船位，加车助舵，防止擦碰游泳场和桥墩。","options":["对","错"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-98","type":"single","stem":"前方所见桥梁是桂江一桥，通航净高是（  ）米。","options":["8","10","12"],"answer":0,"ref":"","note":"","img":""},{"id":"bmdj-wz-99","type":"single","stem":"前方即将通过（  ），通航净高（  ）米。","options":["桂江一桥；8","桂江二桥；7","鸳江大桥；8"],"answer":2,"ref":"","note":"","img":""},{"id":"bmdj-wz-100","type":"single","stem":"凡航行通过梧州桂江河口报告线的船舶，除按《广西西江航运干线（南宁—梧州航段）船舶报告制度》流程报告外，在进出梧州桂江河口报告线时，还应向（  ）报告。","options":["广西海事局","梧州海事局","梧州航道局"],"answer":1,"ref":"","note":"","img":""},{"id":"bmdj-wz-101","type":"single","stem":"本船右前方（资源图所示）的航标是（  ）标？","options":["左右通航标","过河标","沿岸标"],"answer":0,"ref":"","note":"","img":"images/bmdj-wz-101.webp"}]}]}]};
+
+/* ============ 进度存储 ============ */
+const KEY = 'hxbank.v1';
+const CAN_SAVE = (() => { try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return true; } catch(e){ return false; } })();
+let store = loadStore();
+function loadStore(){
+  try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.ans) return o; } catch(e){}
+  return { ans: {} };
+}
+function saveStore(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+
+/* ============ 运行状态 ============ */
+const S = { view:'home', routeId:null, chapterId:null, mode:'seq', queue:[], idx:0, reveal:false };
+
+/* ============ 工具 ============ */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fmtStem(s){
+  return esc(s)
+    .replace(/_{2,}/g, '<span class="bk">$&</span>')
+    .replace(/（\s*）/g, '<span class="bk">（　　）</span>');
+}
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const getRoute = id => BANK.routes.find(r => r.id === id);
+const getChapter = (rid, cid) => { const r = getRoute(rid); return r && r.chapters.find(c => c.id === cid); };
+const isObj = q => q.type !== 'subjective';
+const pct = (a, b) => b ? Math.round(a * 100 / b) : 0;
+
+function chapterStat(ch){
+  let done = 0, ok = 0, total = 0;
+  ch.questions.forEach(q => {
+    if (!isObj(q)) return;
+    total++;
+    const a = store.ans[q.id];
+    if (a){ done++; if (a.ok) ok++; }
+  });
+  return { done, ok, total };
+}
+function routeStat(r){
+  const t = { done:0, ok:0, total:0 };
+  r.chapters.forEach(ch => { const s = chapterStat(ch); t.done += s.done; t.ok += s.ok; t.total += s.total; });
+  return t;
+}
+function queueStat(){
+  let done = 0, ok = 0;
+  S.queue.forEach(q => {
+    if (!isObj(q)) return;
+    const a = store.ans[q.id];
+    if (a){ done++; if (a.ok) ok++; }
+  });
+  return { done, ok };
+}
+
+/* ============ 视图：首页 ============ */
+function viewHome(){
+  const cards = BANK.routes.map(r => {
+    const rs = routeStat(r);
+    const total = r.chapters.reduce((n, c) => n + c.questions.length, 0);
+    const rows = r.chapters.map(ch => {
+      const s = chapterStat(ch);
+      return `<button class="ch" data-act="open" data-r="${r.id}" data-c="${ch.id}">
+        <span class="ch-name">${esc(ch.name)}</span>
+        <span class="ch-meta">${s.done}/${s.total}${s.done ? ' · ' + pct(s.ok, s.done) + '%' : ''}</span>
+        <span class="bar"><i style="width:${pct(s.done, s.total)}%"></i></span>
+      </button>`;
+    }).join('');
+    return `<section class="card">
+      <div class="card-hd">
+        <div class="card-title">${esc(r.name)}</div>
+        <div class="card-sub">${r.chapters.length} 个航段 · 共 ${total} 题 · 已做 ${rs.done}/${rs.total}${rs.done ? ' · 正确率 ' + pct(rs.ok, rs.done) + '%' : ''}</div>
+      </div>
+      ${rows}
+    </section>`;
+  }).join('');
+
+  const t = BANK.routes.reduce((a, r) => { const s = routeStat(r); a.done += s.done; a.ok += s.ok; a.total += s.total; return a; }, { done:0, ok:0, total:0 });
+
+  return `<header class="hd">
+      <div class="hd-row"><div class="hd-title">广西航线刷题</div></div>
+      <div class="hd-row"><div class="hd-sub">总进度 <strong>${t.done}</strong>/${t.total} 题${t.done ? ' · 正确率 <strong>' + pct(t.ok, t.done) + '%</strong>' : ''}</div></div>
+    </header>
+    <main class="main">
+      ${cards}
+      <div class="hint">点击航段即可开始练习，答题后立即显示答案${CAN_SAVE ? '' : '（当前打开方式无法保存进度）'}</div>
+      <div style="text-align:center"><button class="btn ghost sm" data-act="reset">重置全部进度</button></div>
+    </main>`;
+}
+
+/* ============ 视图：练习 ============ */
+function buildQueue(){
+  const ch = getChapter(S.routeId, S.chapterId);
+  let qs = ch.questions.slice();
+  if (S.mode === 'rand') qs = shuffle(qs);
+  else if (S.mode === 'wrong') qs = qs.filter(q => { const a = store.ans[q.id]; return a && !a.ok; });
+  S.queue = qs;
+  S.idx = 0;
+  if (S.mode === 'seq'){
+    const i = qs.findIndex(q => !store.ans[q.id]);
+    if (i >= 0) S.idx = i;
+  }
+}
+
+function qCard(q){
+  const a = store.ans[q.id];
+  const answered = !!a && isObj(q);
+  const judge = q.type === 'judge';
+  let body = '';
+
+  if (q.type === 'subjective'){
+    body = `<button class="btn pri" data-act="reveal" style="width:100%">${S.reveal ? '收起参考答案' : '查看参考答案'}</button>
+      ${S.reveal ? `<div class="res ref">${esc(q.ref || '（本题库未收录参考答案）')}</div>` : ''}`;
+  } else {
+    body = `<div class="opts">` + q.options.map((t, i) => {
+      let cls = 'opt' + (judge ? ' judge' : '');
+      if (answered){
+        if (i === q.answer) cls += ' ok';
+        else if (i === a.c) cls += ' bad';
+      }
+      const tag = judge ? '' : `<span class="tag">${'ABCDEFGH'[i] || (i + 1)}</span>`;
+      const mk = answered && i === q.answer ? '<span class="mk">✓</span>'
+               : answered && i === a.c ? '<span class="mk">✗</span>' : '';
+      return `<button class="${cls}" data-act="pick" data-i="${i}">${tag}<span class="ot">${esc(t)}</span>${mk}</button>`;
+    }).join('') + `</div>`;
+  }
+
+  let res = '';
+  if (answered){
+    const ansText = q.options[q.answer] != null ? q.options[q.answer] : '';
+    res = `<div class="res ${a.ok ? 'ok' : 'bad'}">${a.ok ? '✓ 答对了' : '✗ 答错了　正确答案：<b>' + esc(ansText) + '</b>'}
+      ${q.note ? `<div class="note">⚠ ${esc(q.note)}</div>` : ''}</div>`;
+  }
+
+  const fig = q.img
+    ? `<div class="fig" data-act="zoom" data-src="${esc(q.img)}"><img src="${esc(q.img)}" alt="题目配图" loading="lazy" decoding="async"><span class="zoomhint">点击放大</span></div>`
+    : '';
+
+  return `<div class="card qcard">
+      <div class="qno">第 ${S.idx + 1} / ${S.queue.length} 题</div>
+      <div class="stem">${fmtStem(q.stem)}</div>
+      ${fig}
+      ${body}
+      ${res}
+    </div>`;
+}
+
+function viewQuiz(){
+  const ch = getChapter(S.routeId, S.chapterId);
+  const q = S.queue[S.idx];
+  const st = queueStat();
+  const seg = (m, label) => `<button class="seg ${S.mode === m ? 'on' : ''}" data-act="mode" data-m="${m}">${label}</button>`;
+  const body = q ? qCard(q) : `<div class="empty">${S.mode === 'wrong' ? '本章节暂无错题 🎉' : '本章节暂无题目'}</div>`;
+
+  return `<header class="hd">
+      <div class="hd-row">
+        <button class="btn ghost sm" data-act="back">← 返回</button>
+        <div class="hd-title">${esc(ch.name)}</div>
+        <div class="hd-sub">${st.done ? '正确率 <strong>' + pct(st.ok, st.done) + '%</strong>' : ''}</div>
+      </div>
+      <div class="hd-row">
+        <div class="segwrap">${seg('seq', '顺序')}${seg('rand', '随机')}${seg('wrong', '错题')}</div>
+      </div>
+    </header>
+    <main class="main">${body}</main>
+    <footer class="ft">
+      <button class="btn" data-act="prev" ${(!q || S.idx <= 0) ? 'disabled' : ''}>上一题</button>
+      <button class="btn pri" data-act="next" ${(!q || S.idx >= S.queue.length - 1) ? 'disabled' : ''}>下一题</button>
+    </footer>`;
+}
+
+/* ============ 渲染 ============ */
+function render(){
+  document.getElementById('app').innerHTML = (S.view === 'home') ? viewHome() : viewQuiz();
+}
+
+/* ============ 交互 ============ */
+function pick(i){
+  const q = S.queue[S.idx];
+  if (!q || !isObj(q)) return;
+  if (i < 0 || i >= q.options.length) return;
+  const prev = store.ans[q.id];
+  if (prev && prev.c === i) return;
+  store.ans[q.id] = { c: i, ok: i === q.answer };
+  saveStore();
+  render();
+}
+function go(step){
+  const n = S.idx + step;
+  if (n < 0 || n >= S.queue.length) return;
+  S.idx = n; S.reveal = false;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function openZoom(src){
+  if (!src) return;
+  const d = document.createElement('div');
+  d.className = 'lightbox';
+  d.innerHTML = '<button class="lb-close">关闭</button><img alt="题目配图">';
+  d.querySelector('img').src = src;
+  d.addEventListener('click', () => d.remove());
+  document.body.appendChild(d);
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'open'){
+    S.routeId = b.dataset.r; S.chapterId = b.dataset.c;
+    S.mode = 'seq'; S.reveal = false;
+    buildQueue(); S.view = 'quiz'; render(); window.scrollTo(0, 0);
+  } else if (act === 'back'){
+    S.view = 'home'; render(); window.scrollTo(0, 0);
+  } else if (act === 'mode'){
+    if (S.mode === b.dataset.m) return;
+    S.mode = b.dataset.m; S.reveal = false;
+    buildQueue(); render(); window.scrollTo(0, 0);
+  } else if (act === 'pick'){
+    pick(Number(b.dataset.i));
+  } else if (act === 'reveal'){
+    S.reveal = !S.reveal; render();
+  } else if (act === 'zoom'){
+    openZoom(b.dataset.src);
+  } else if (act === 'prev'){
+    go(-1);
+  } else if (act === 'next'){
+    go(1);
+  } else if (act === 'reset'){
+    if (window.confirm('确定要清空全部答题记录吗？此操作不可恢复。')){
+      store = { ans: {} }; saveStore(); render();
+    }
+  }
+});
+
+document.addEventListener('error', e => {
+  const el = e.target;
+  if (el && el.tagName === 'IMG' && el.parentElement && el.parentElement.classList.contains('fig')){
+    el.parentElement.classList.add('figerr');
+  }
+}, true);
+
+document.addEventListener('keydown', e => {
+  if (S.view !== 'quiz') return;
+  const q = S.queue[S.idx];
+  if (!q) return;
+  if (isObj(q)){
+    const letter = 'ABCDEFGH'.indexOf(e.key.toUpperCase());
+    const num = /^[1-8]$/.test(e.key) ? Number(e.key) - 1 : -1;
+    const i = letter >= 0 ? letter : num;
+    if (i >= 0 && i < q.options.length){ e.preventDefault(); pick(i); return; }
+  } else if (e.key === 'Enter' || e.key === ' '){
+    e.preventDefault(); S.reveal = !S.reveal; render(); return;
+  }
+  if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(1); }
+  else if (e.key === 'ArrowLeft'){ e.preventDefault(); go(-1); }
+});
+
+render();
+</script>
+</body>
+</html>
